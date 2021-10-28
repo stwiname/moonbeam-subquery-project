@@ -1,0 +1,118 @@
+specVersion: 0.2.0
+name: moonbeam-subquery-project
+version: 1.0.0
+description: ''
+repository: ''
+schema:
+  file: ./schema.graphql
+network:
+  genesisHash: '0x401a1f9dca3da46f5c4091016c8a2f26dcea05865116b286f60f668207d1474b' # Moonriver
+  endpoint: wss://moonriver.api.onfinality.io/public-ws
+
+  chaintypes:
+    file: "./types.yaml"
+
+dataSources:
+  - kind: substrate/Runtime
+    startBlock: 1
+    mapping:
+      file: ./dist/index.js
+      handlers:
+
+        # Democracy
+        - handler: handleVote
+          kind: substrate/CallHandler
+          filter:
+            module: democracy
+            method: vote
+        - handler: handleProposal
+          kind: substrate/EventHandler
+          filter:
+            module: democracy
+            method: Proposed
+
+        # Staking
+        #  Rewards
+        - handler: handleSlash
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: Slashed
+
+        - handler: handleReward
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: Rewarded
+
+        #  Nomination
+        - handler: handleNomination
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: Nomination
+
+        - handler: handelNominationIncreased
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: NominationIncreased
+
+        - handler: handelNominationDecreased
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: NominationDecreased
+
+        - handler: handleNominationRevoke
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: NominatorExitScheduled
+
+        # Collation
+        - handler: handleJoinCollators
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: JoinedCollatorCandidates
+
+        - handler: handelCollationIncrease
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: CollatorBondedMore
+
+        - handler: handelCollationDecrease
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: CollatorBondedLess
+
+        - handler: handleCollationExit
+          kind: substrate/EventHandler
+          filter:
+            module: parachainStaking
+            method: CollatorScheduledExit
+
+        # Transfers
+        - handler: handleTransfer
+          kind: substrate/EventHandler
+          filter:
+            module: balances
+            method: Transfer
+
+  - kind: substrate/Moonbeam
+    startBlock: 1
+
+    processor:
+      file: './node_modules/@subql/contract-processors/dist/moonbeam.js'
+
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        - handler: handleERC20Transfer
+          kind: substrate/MoonbeamEvent
+          filter:
+            topics:
+              - Transfer(address indexed from,address indexed to,u256 value)

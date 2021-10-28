@@ -1,0 +1,81 @@
+type Account @entity {
+  id: ID!
+
+  # MOVR/GLMR transfers
+  transferIn: [Transfer] @derivedFrom(field: "to")
+  transferOut: [Transfer] @derivedFrom(field: "from")
+
+  erc20In: [Transfer] @derivedFrom(field: "to")
+  erc20Out: [Transfer] @derivedFrom(field: "from")
+
+  proposals: [Proposal] @derivedFrom(field: "account")
+  votes: [Vote] @derivedFrom(field: "voter")
+
+  # Amount other users have nominated to this account
+  totalNominated: BigInt!
+  totalCollated: BigInt!
+
+  nominations: [Nomination] @derivedFrom(field: "collator") # Current Nominations to this account
+  nominees: [Nomination] @derivedFrom(field: "nominator") # Current Nominations made by this account
+
+  totalRewards: BigInt!
+  totalSlashes: BigInt!
+
+  rewards: [StakingReward] @derivedFrom(field: "account")
+  slashes: [StakingSlash] @derivedFrom(field: "account")
+}
+
+type Transfer @entity {
+  id: ID! # Extrinsic hash
+
+  from: Account!
+  to: Account!
+  contractAddress: String!
+  amount: BigInt!
+  timestamp: Date
+  fee: BigInt
+  blockNumber: BigInt
+  hash: String # Eth tx hash
+}
+
+type Proposal @entity {
+  id: ID!
+
+  account: Account!
+  amount: BigInt!
+}
+
+type Vote @entity {
+  id: ID! # Extrinsic hash
+
+  voter: Account!
+  refIndex: Int!
+  aye: Boolean!
+  amount: BigInt!
+  blockNumber: BigInt!
+  timestamp: Date!
+}
+
+type Nomination @entity {
+  id: ID! # concat(nominator, nominee)
+
+  amount: BigInt!
+  nominator: Account!
+  collator: Account!
+}
+
+type StakingReward @entity{
+  id: ID! # AccountId / Account Hash
+  account: Account!
+  balance: BigInt!
+  timestamp: Date!
+  blockNumber: BigInt!
+}
+
+type StakingSlash @entity{
+  id: ID! # AccountId / Account Hash
+  account: Account!
+  balance: BigInt!
+  timestamp: Date!
+  blockNumber: BigInt!
+}
